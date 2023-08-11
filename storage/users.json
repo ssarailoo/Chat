@@ -1,0 +1,144 @@
+[
+    {
+        "username": "saeed",
+        "name": "saeed",
+        "email": "s@yahoo.com",
+        "password": "ssss",
+        "profilePic": ".\/users\/saeed\/pictures\/images.png",
+        "bio": ".\/users\/saeed\/bio\/bio.txt",
+        "isAdmin": true,
+        "isBlocked": false,
+        "friends": {
+            "8": {
+                "profile": ".\/users\/ali\/pictures\/images (1).jfif",
+                "username": "ali",
+                "bio": ".\/storage\/defaultBio.txt",
+                "hashedUsername": "ba0cf62e2f70e67ecd9d7e1ce92e5a1c5bee9c96"
+            },
+            "9": {
+                "profile": ".\/users\/hossein\/pictures\/images.jfif",
+                "username": "hossein",
+                "bio": ".\/storage\/defaultBio.txt",
+                "hashedUsername": "7c6899945a585a0d4906ce0c2ca4fe6e40f37c70"
+            }
+        },
+        "hashedUsername": "d669799e3fa908ce2c40397ca84a50799bcc106a"
+    },
+    {
+        "username": "ali",
+        "name": "ali",
+        "email": "a@yahoo.com",
+        "password": "ssss",
+        "profilePic": ".\/users\/ali\/pictures\/images (1).jfif",
+        "bio": ".\/storage\/defaultBio.txt",
+        "isAdmin": false,
+        "isBlocked": true,
+        "friends": [
+            {
+                "profile": ".\/users\/saeed\/pictures\/images.png",
+                "username": "saeed",
+                "bio": ".\/users\/saeed\/bio\/bio.txt",
+                "hashedUsername": "d669799e3fa908ce2c40397ca84a50799bcc106a"
+            }
+        ],
+        "hashedUsername": "ba0cf62e2f70e67ecd9d7e1ce92e5a1c5bee9c96"
+    },
+    {
+        "username": "hossein",
+        "name": "hossein",
+        "email": "h@yahoo.com",
+        "password": "ssss",
+        "profilePic": ".\/users\/hossein\/pictures\/images.jfif",
+        "bio": ".\/storage\/defaultBio.txt",
+        "isAdmin": false,
+        "isBlocked": false,
+        "friends": [
+            {
+                "profile": ".\/users\/saeed\/pictures\/images.png",
+                "username": "saeed",
+                "bio": ".\/users\/saeed\/bio\/bio.txt",
+                "hashedUsername": "d669799e3fa908ce2c40397ca84a50799bcc106a"
+            },
+            {
+                "profile": "https:\/\/xsgames.co\/randomusers\/avatar.php?g=male",
+                "username": "ali",
+                "bio": ".\/storage\/defaultBio.txt",
+                "hashedUsername": "ba0cf62e2f70e67ecd9d7e1ce92e5a1c5bee9c96"
+            },
+            {
+                "profile": ".\/storage\/pictures\/defaultPic.png",
+                "username": "morteza",
+                "bio": ".\/storage\/defaultBio.txt",
+                "hashedUsername": "5750c7244a5d8683f00407fed2f6ad8d3401bd47"
+            },
+            {
+                "profile": ".\/storage\/pictures\/defaultPic.png",
+                "username": "mammad",
+                "bio": ".\/storage\/defaultBio.txt",
+                "hashedUsername": "f133e85b85a688f06fcc708882b6201685de08f5"
+            },
+            {
+                "profile": "https:\/\/xsgames.co\/randomusers\/avatar.php?g=female",
+                "username": "aghdas",
+                "bio": ".\/storage\/defaultBio.txt",
+                "hashedUsername": "36c0bb8994ce3ab1202626c6f45e2bf8d259158e"
+            }
+        ],
+        "hashedUsername": "7c6899945a585a0d4906ce0c2ca4fe6e40f37c70"
+    },
+    {
+        "username": "aghdas",
+        "name": "aghdas",
+        "email": "hh@yahoo.com",
+        "password": "ssss",
+        "profilePic": ".\/users\/aghdas\/pictures\/download.jfif",
+        "bio": ".\/storage\/defaultBio.txt",
+        "isAdmin": false,
+        "isBlocked": false,
+        "friends": [
+            {
+                "profile": "https:\/\/xsgames.co\/randomusers\/avatar.php?g=male",
+                "username": "ali",
+                "bio": ".\/storage\/defaultBio.txt",
+                "hashedUsername": "ba0cf62e2f70e67ecd9d7e1ce92e5a1c5bee9c96"
+            }
+        ],
+        "hashedUsername": "36c0bb8994ce3ab1202626c6f45e2bf8d259158e"
+    },
+    {
+        "username": "morteza",
+        "name": "morteza",
+        "email": "m@yahoo.com",
+        "password": "ssss",
+        "profilePic": ".\/storage\/pictures\/defaultPic.png",
+        "bio": ".\/storage\/defaultBio.txt",
+        "isAdmin": false,
+        "isBlocked": false,
+        "friends": [],
+        "hashedUsername": "5750c7244a5d8683f00407fed2f6ad8d3401bd47"
+    },
+    {
+        "username": "mammad",
+        "name": "mamad",
+        "email": "mm@yahoo.com",
+        "password": "ssss",
+        "profilePic": ".\/storage\/pictures\/defaultPic.png",
+        "bio": ".\/storage\/defaultBio.txt",
+        "isAdmin": false,
+        "isBlocked": false,
+        "friends": [],
+        "hashedUsername": "f133e85b85a688f06fcc708882b6201685de08f5"
+    },
+    {
+        "username": "reza",
+        "name": "reza",
+        "email": "r@yahoo.com",
+        "password": "ssss",
+        "profilePic": ".\/storage\/pictures\/defaultPic.png",
+        "bio": ".\/storage\/defaultBio.txt",
+        "isAdmin": false,
+        "isBlocked": true,
+        "friends": [],
+        "hashedUsername": "cadee45de77906348ca6fb63e778f3bd1e8997f8"
+    }
+]
