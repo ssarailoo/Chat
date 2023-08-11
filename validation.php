@@ -1,11 +1,14 @@
 <?php
+require_once "DatabaseConnection.php";
 session_start();
 
-$jsonArray = [];
+$con = DatabaseConnection::getInstance();
+$pdo = $con->getConnection();
+$sql = 'Select * from users';
+$stmt = $pdo->prepare($sql);
+$stmt->execute();
+$usersData = $stmt->fetchAll();
 
-if (is_file('./storage/users.json')) {
-    $jsonArray = json_decode(file_get_contents('./storage/users.json'), true);
-}
 
 if (isset($_POST['submit'])) {
     $userName = $_POST['username'];
@@ -14,40 +17,35 @@ if (isset($_POST['submit'])) {
     $password = $_POST['password'];
 
 
-    $user = [
+    $enteredReg = [
         'username' => $userName,
         'name' => $name,
         'email' => $email,
         'password' => $password,
         'profilePic' => './storage/pictures/defaultPic.png',
         'bio' => './storage/defaultBio.txt',
-        'isAdmin' => false,
-        'isBlocked' => false,
-        'friends' => []
 
     ];
 
-    if (validationReg($user)) {
-       $hashedUser=hash( 'ripemd160',$user['username']);
-       $user['hashedUsername']=$hashedUser;
-        $jsonArray[] = $user;
-        file_put_contents('./storage/users.json', json_encode($jsonArray, JSON_PRETTY_PRINT));
+    if (validationReg($enteredReg)) {
+        $hashedUser = hash('ripemd160', $enteredReg['username']);
+        $enteredReg['hashed_username'] = $hashedUser;
+        $con = DatabaseConnection::getInstance();
+        $pdo = $con->getConnection();
+        $sql = "INSERT INTO users(username, name, email, password, hashed_username)
+                       VALUES(:username,:name,:email,:password,:hashed_username)";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['username' => $enteredReg['username'], 'name' => $enteredReg['name'],
+            'email' => $enteredReg['email']
+            , 'password' => $enteredReg['password'], 'hashed_username' => $enteredReg['hashed_username']]);
         header('location:signin.php');
     } else  header('location:signup.php');
 }
 if (isset($_POST['Login'])) {
-    $user['username'] = $_POST['username-log'];
-    $user['password'] = $_POST['password-log'];
+    $enteredLog['username'] = $_POST['username-log'];
+    $enteredLog['password'] = $_POST['password-log'];
+    loginValidation($enteredLog) ? header('location:mainPage.php') : header('location:signin.php');
 
-    if (loginValidation($user)) {
-        $clients = json_decode(file_get_contents('./storage/users.json'), true);
-        foreach ($clients as $client) {
-            if ($client['username'] == $user['username']) {
-                $_SESSION['user'] = $client;
-            }
-        }
-        header('location:mainPage.php');
-    } else  header('location:signin.php');
 }
 
 /**
@@ -61,7 +59,7 @@ function validationReg(array $inputs): bool|array
         'name' => true,
         'email' => true,
         'password' => true];
-    global $jsonArray;
+    global $usersData;
     $registerErrors = array();
     /*
     not filled
@@ -95,7 +93,7 @@ function validationReg(array $inputs): bool|array
 
     }
 
-    if ($bail['username'] && !isUnique($jsonArray, 'username', $inputs['username'])) {
+    if ($bail['username'] && !isExisted('username', $inputs['username'])) {
         $registerErrors['username'][] = "Entered username is existed";
     }
     /*
@@ -113,7 +111,7 @@ function validationReg(array $inputs): bool|array
     if ($bail['email'] && !isEmail($inputs['email'])) {
         $registerErrors['email'][] = 'please enter a valid email';
     }
-    if ($bail['email'] && !isUnique($jsonArray, 'email', $inputs['email'])) {
+    if ($bail['email'] && !isExisted('email', $inputs['email'])) {
         $registerErrors['email'][] = 'Entered Email is existed';
     }
     /*
@@ -139,9 +137,9 @@ function validationReg(array $inputs): bool|array
  * @param bool $bail
  * @return bool|array
  */
-function loginValidation(array $inputs, bool $bail = true): bool|array
+function loginValidation(array $inputs, bool $bail = true): bool
 {
-    global $jsonArray;
+
     $loginErrors = array();
     if (!filled($inputs, 'username')) {
 
@@ -152,13 +150,22 @@ function loginValidation(array $inputs, bool $bail = true): bool|array
         $loginErrors['password'][] = 'Please Enter your password';
         $bail = false;
     }
-    if ($bail && !matchUserPass($jsonArray, 'username', $inputs['username'], 'password', $inputs['password'])) {
+    if ($bail && !matchUserPass($inputs['username'], $inputs['password'])) {
         $loginErrors['main'][] = 'Entered username and password does not match';
     }
 
-    if (empty($loginErrors))
-        return $inputs;
-    else {
+    if (empty($loginErrors)) {
+        $con = DatabaseConnection::getInstance();
+        $pdo = $con->getConnection();
+        $sql = "SELECT * from users WHERE username='$inputs[username]'";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute();
+        $data = $stmt->fetchAll();
+        unset($data['password']);
+        $_SESSION['user'] = $data;
+
+        return true;
+    } else {
         $_SESSION['errors-login'] = $loginErrors;
         return false;
     }
@@ -192,22 +199,18 @@ function numOfChar(string $input): false|int
 }
 
 /**
- * @param array $array
- * @param string $key
- * @param string $target
+ * @param string $col
+ * @param string $value
  * @return bool
  */
-function isUnique(array $array, string $key, string $target): bool
+function isExisted(string $col, string $value): bool
 {
-    $is_unique = true;
-    foreach ($array as $user) {
-        if ($user[$key] == $target) {
-            $is_unique = false;
-            break;
-        }
-
-    }
-    return $is_unique;
+    $con = DatabaseConnection::getInstance();
+    $pdo = $con->getConnection();
+    $sql = "SELECT $col FROM users WHERE $col='$value'";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    return !$stmt->fetch();
 }
 
 
@@ -239,20 +242,17 @@ function isEmail(string $email)
 }
 
 /**
- * @param array $array
- * @param string $usernameKey
- * @param string $userName
- * @param string $passwordKey
- * @param string $pass
+ * @param string $username
+ * @param string $password
  * @return bool
  */
-function matchUserPass(array $array, string $usernameKey, string $userName, string $passwordKey, string $pass): bool
+function matchUserPass(string $username, string $password): bool
 {
-    foreach ($array as $user) {
-        if ($user[$usernameKey] == $userName && $user[$passwordKey] == $pass) {
-            return true;
-        }
-    }
-    return false;
+    $con = DatabaseConnection::getInstance();
+    $pdo = $con->getConnection();
+    $sql = "SELECT password FROM users WHERE username='$username'";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute();
+    return $stmt->fetch()['password'] == $password;
 }
 
