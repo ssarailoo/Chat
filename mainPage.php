@@ -263,7 +263,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                                                 </form>
                                             </li>
                                         <?php }
-                                        $sql="Select username,profile_pic,bio,hashed_username From user_friends join users u on user_friends.friend_id = u.id  ";
+                                        $sql="Select id,username,profile_pic,bio,hashed_username From user_friends join users u on user_friends.friend_id = u.id  ";
                                         $stmt=$pdo->prepare($sql);
                                         $stmt->execute();
                                         $friendsData=$stmt->fetchAll();
@@ -296,7 +296,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                                                             <div class="pt-1">
                                                                 <button class="btn"><a
                                                                         class="btn btn-secondary bg-opacity-50 "
-                                                                        href="unfriend.php?unfriend=<?= $friendUsername ?>">Unfriend
+                                                                        href="unfriend.php?unfriend=<?= $friendData['id'] ?>">Unfriend
                                                                     </a></button>
                                                                 <button class="btn"><a
                                                                         class="btn btn-secondary bg-opacity-50 "

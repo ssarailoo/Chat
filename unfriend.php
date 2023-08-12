@@ -1,22 +1,11 @@
 <?php
+require_once "DatabaseConnection.php";
 session_start();
-$friendUsername = $_GET['unfriend'];
-$userlogged = $_SESSION['user'];
-$userlogged = $userlogged['username'];
-
-$users = json_decode(file_get_contents('./storage/users.json'), true);
-foreach ($users as $index => $user) {
-    if ($user['username'] == $userlogged) {
-        $friends = $user['friends'];
-        foreach ($friends as $i => $friend) {
-            if ($friend['username'] == $friendUsername)
-                unset($friends[$i]);
-
-        }
-        $user['friends'] = $friends;
-        $users[$index] = $user;
-
-    }
-}
-file_put_contents('./storage/users.json', json_encode($users, JSON_PRETTY_PRINT));
+$friendId = $_GET['unfriend'];
+$userLogged = $_SESSION['user'];
+$userLoggedId = $userLogged['id'];
+$con = DatabaseConnection::getInstance();
+$pdo = $con->getConnection();
+$stmt = $pdo->prepare("DELETE from user_friends WHERE friend_id=:friend_id ");
+$stmt->execute(['friend_id' => $friendId]);
 header('location:mainPage.php');
