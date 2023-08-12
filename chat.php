@@ -6,7 +6,6 @@ $userLogged = $_SESSION['user'];
 $con = DatabaseConnection::getInstance();
 $pdo = $con->getConnection();
 
-
 $user = $userLogged['username'];
 $user .= $userLogged['isAdmin'] ? " (admin):" : " :";
 if (isset($_POST['send'])) {

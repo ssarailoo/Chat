@@ -1,21 +1,14 @@
 <?php
+require_once "DatabaseConnection.php";
 session_start();
+
 $admin=$_SESSION['user']['username'];
 date_default_timezone_set("Asia/Tehran");
-
+$pdo=DatabaseConnection::getInstance()->getConnection();
 if (isset($_POST['delete'])) {
-    $number = $_POST['delete'];
-    $chats = json_decode(file_get_contents('./storage/chat.json'), true);
-    foreach ($chats as $index => $chat) {
-        if ($index + 1 == $number) {
-            $chat['message'] = '';
-            $chat['deletedByAdmin'] = $admin;
-            $chat['deletedTime'] = date("y/m/d h:i:s");
-            $chats[$index] = $chat;
-            break;
-        }
-    }
-    file_put_contents('./storage/chat.json', json_encode($chats, JSON_PRETTY_PRINT));
+   $id= $_POST['delete'];
+    $stmt = $pdo->prepare('DELETE FROM public_chats WHERE id=:id ');
+    $stmt->execute(['id'=>$id]);
     header('location:mainPage.php');
 }
 
