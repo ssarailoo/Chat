@@ -1,35 +1,26 @@
 <?php
-
+require_once "DatabaseConnection.php";
 session_start();
 date_default_timezone_set("Asia/Tehran");
-$userdata = $_SESSION['user'];
-$number=1;
-if (is_file('./storage/chat.json')) {
-    $jsonChatArray = json_decode(file_get_contents('./storage/chat.json'), true);
-    $number=count($jsonChatArray)+1 ;
-}
-$user = $userdata['username'];
-$user .= $userdata['isAdmin'] ? " (admin):" : " :";
+$userLogged = $_SESSION['user'];
+$con = DatabaseConnection::getInstance();
+$pdo = $con->getConnection();
+
+
+$user = $userLogged['username'];
+$user .= $userLogged['isAdmin'] ? " (admin):" : " :";
 if (isset($_POST['send'])) {
     $chatErrors = array();
-    if ($userdata['isBlocked']) {
+    if ($userLogged['is_blocked']) {
         $chatErrors['blocked'] = "You are blocked from chat!";
     } else {
         if (isLong($_POST['message'])) {
             $chatErrors['messageLength'] = "You must add 1 to 100 characters as message";
         } else if (!empty($_POST['message'])) {
             $message = $_POST['message'];
-            $message =  stripslashes(htmlspecialchars($message)) ;
-            $profilePicDir=$userdata['profilePic'];
-            $chatInfo = [
-                'number' => $number,
-                'time' => date("y/m/d h:i:s"),
-                'user' => $userdata['username'],
-                'profilePic'=>$profilePicDir,
-                'message' => $message
-            ];
-            $jsonChatArray[] = $chatInfo;
-            file_put_contents('./storage/chat.json', json_encode($jsonChatArray, JSON_PRETTY_PRINT));
+            $message = stripslashes(htmlspecialchars($message));
+            $stmt = $pdo->prepare('INSERT INTO public_chats(user_id, send_at, message)VALUES (:user_id,:send_at,:message)');
+            $stmt->execute(['user_id' => $userLogged['id'], 'send_at' => date("y/m/d h:i:s"), 'message' => $message]);
         }
         $image = $_FILES['image'];
         $name = $image['name'];
@@ -39,20 +30,9 @@ if (isset($_POST['send'])) {
         } else if ($size > 0) {
             move_uploaded_file($image['tmp_name'], "./storage/pictures/chatPics/$name");
             $imageDir = "./storage/pictures/chatPics/$name";
-            $data =  "<img style='width: 150px;height: 150px' src='$imageDir' >";
-            $profilePicDir=$userdata['profilePic'];
-
-            $chatInfo = [
-                'number' => $number,
-                'time' => date("y/m/d h:i:s"),
-                'user' => $userdata['username'],
-                'profilePic'=>$profilePicDir,
-                'message' => $data
-            ];
-            $jsonChatArray[] = $chatInfo;
-            file_put_contents('./storage/chat.json', json_encode($jsonChatArray, JSON_PRETTY_PRINT));
-
-
+            $data = "<img style='width: 150px;height: 150px' src='$imageDir' >";
+            $stmt = $pdo->prepare('INSERT INTO public_chats(user_id, send_at, message)VALUES (:user_id,:send_at,:message)');
+            $stmt->execute(['user_id' => $userLogged['id'], 'send_at' => date("y/m/d h:i:s"), 'message' => $data]);
         }
 
     }
@@ -71,8 +51,10 @@ function isLong(string $message): bool
 
 function isLargImage(int $size): bool
 {
-    return $size > 0.1 * 1024 * 1024;
-}2
+    return $size > 0.5 * 1024 * 1024;
+}
+
+2
 
 ?>
 

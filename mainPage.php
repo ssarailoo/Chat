@@ -79,11 +79,9 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                             <?php
                             $con = DatabaseConnection::getInstance();
                             $pdo = $con->getConnection();
-                            $sql = 'Select * from users';
-                            $stmt = $pdo->prepare($sql);
+                            $stmt = $pdo->prepare('Select * from users');
                             $stmt->execute();
                             $usersData = $stmt->fetchAll();
-
                             foreach ($usersData as $i => $user) {
                                 $username = $user['username'];
                                 if ($username == $userLogged['username'])
@@ -140,8 +138,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                 if ($chat['user_id'] == $userLogged['id']){
                 if (empty($chat['message']))
                     continue;
-                $sql='SELECT profile_pic,username FROM users WHERE id=:id';
-                $stmt=$pdo->prepare($sql);
+                $stmt=$pdo->prepare('SELECT profile_pic,username FROM users WHERE id=:id');
                 $stmt->execute(['id'=>$chat['user_id']]);
                 $userData=$stmt->fetch();
                 $profile = $userData['profile_pic'];
@@ -170,6 +167,10 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                              class="rounded-circle d-flex align-self-start ms-3 shadow-1-strong" width="60">
                     </li>
                     <?php } else {
+                        $stmt=$pdo->prepare('SELECT profile_pic,username FROM users WHERE id=:id');
+                        $stmt->execute(['id'=>$chat['user_id']]);
+                        $userData=$stmt->fetch();
+                        $profile = $userData['profile_pic'];
                         if (empty($chat['message']))
                             continue;
                         if ($userLogged['is_admin'])
