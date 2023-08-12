@@ -1,6 +1,9 @@
 <?php
+require_once "DatabaseConnection.php";
+$pdo = DatabaseConnection::getInstance()->getConnection();
 session_start();
-$userName = $_SESSION['user']['username'];
+$userLogged=$_SESSION['user'];
+$userName =$userLogged['username'];
 if (!is_dir("./users/" . $userName)) {
     mkdir("./users/" . $userName);
 }
@@ -13,49 +16,30 @@ if (!is_dir("./users/$userName/bio")) {
 }
 if (isset($_POST['delete'])) {
     unlink($_POST['delete']);
+    $pdo->prepare('UPDATE users SET profile_pic=:profile_pic WHERE id=:id')->execute(['profile_pic' =>"./storage/pictures/defaultPic.png", 'id' => $userLogged['id']]);
 }
 if (isset($_POST['setProfile'])) {
     $proPicDir = $_POST['setProfile'];
-    $_SESSION['user']['profilePic']=$proPicDir;
-    $users = file_get_contents('./storage/users.json');
-    $users = json_decode($users, true);
-    foreach ($users as $i => $user) {
-        if ($user['username'] == $userName) {
-            $user['profilePic'] = $proPicDir;
-            $users[$i] = $user;
-        }
-    }
-    $jsonData = json_encode($users, JSON_PRETTY_PRINT);
-    file_put_contents('./storage/users.json', $jsonData);
+    $pdo->prepare('UPDATE users SET profile_pic=:profile_pic WHERE id=:id')->execute(['profile_pic' =>$proPicDir, 'id' => $userLogged['id']]);
 }
 
 if (isset($_POST['submit'])) {
-    $file = $_FILES['file'];
-    $fileName = $file['name'];
-
-
-    move_uploaded_file($file['tmp_name'], "./users/$userName/pictures/$fileName");
-    if (!empty($_POST['bio'])) {
-        $bio = $_POST['bio'];
-        file_put_contents("./users/$userName/bio/bio.txt", $bio);
-        $_SESSION['user']['bio']="./users/$userName/bio/bio.txt";
-        $users = file_get_contents('./storage/users.json');
-        $users = json_decode($users, true);
-        foreach ($users as $i => $user) {
-            if ($user['username'] == $userName) {
-                $user['bio'] = "./users/$userName/bio/bio.txt";
-                $users[$i] = $user;
-            }
-        }
-        $jsonData = json_encode($users, JSON_PRETTY_PRINT);
-        file_put_contents('./storage/users.json', $jsonData);
-    }
+$file = $_FILES['file'];
+$fileName = $file['name'];
+move_uploaded_file($file['tmp_name'], "./users/$userName/pictures/$fileName");
+$pdo->prepare('UPDATE users SET profile_pic=:profile_pic WHERE id=:id')->execute(['profile_pic' =>"./users/$userName/pictures/$fileName", 'id' => $userLogged['id']]);
+if (!empty($_POST['bio'])) {
+    $bio = $_POST['bio'];
+    file_put_contents("./users/$userName/bio/bio.txt", $bio);
+    $pdo->prepare('UPDATE users SET bio=:bio WHERE id=:id')->execute(['bio' => "./users/$userName/bio/bio.txt", 'id' => $userLogged['id']]);
 }
-if (isset($_POST['logout'])){
+}
+
+if (isset($_POST['logout'])) {
     session_unset();
     header('location:signin.php');
 }
-if (isset($_POST['home'])){
+if (isset($_POST['home'])) {
 
     header('location:mainPage.php');
 }
@@ -85,8 +69,6 @@ if (isset($_POST['home'])){
         }
 
 
-
-
         .mask-custom {
             background: rgba(24, 24, 16, .2);
             border-radius: 2em;
@@ -100,39 +82,41 @@ if (isset($_POST['home'])){
 <body>
 <section class="gradient-custom" style="padding: 0">
     <div class="container  py-5" style="width: 100rem;">
-<form action="" enctype="multipart/form-data" method="post">
-    <input type="text" name="bio" placeholder="bio">
-    <input type="file" name="file">
-    <input type="submit" name="submit">
-</form>
-
-
-<?php
-$images = scandir("./users/$userName/pictures");
-
-$images = array_slice($images, 2);
-
-if (!empty($images)) {
-
-    foreach ($images as $i => $image) {
-        $imageDir = "./users/$userName/pictures/$image";
-        ?>
-
-
-        <img class="mt-5" style="width:150px; height: 150px" src="<?php echo $imageDir ?> ">
-        <form action="" method="post">
-            <button type="submit" name="delete" value="<?php echo $imageDir ?>">Delete</button>
-            <button type="submit" name="setProfile" value="<?php echo $imageDir ?>">Set this as profile picture</button>
+        <form action="" enctype="multipart/form-data" method="post">
+            <input type="text" name="bio" placeholder="bio">
+            <input type="file" name="file">
+            <input type="submit" name="submit">
         </form>
-    <?php }
-} ?>
-<form action="" method="post">
-    <div class="d-flex flex-row justify-content-between mt-5">
-        <button class="btn btn-secondary btn-lg m-3" type="submit" name="home">Group Chat</button>
-        <button class="btn btn-secondary btn-lg m-3" type="submit"  name="logout">Logout</button>
 
-    </div>
-</form>
+
+        <?php
+        $images = scandir("./users/$userName/pictures");
+
+        $images = array_slice($images, 2);
+
+        if (!empty($images)) {
+
+            foreach ($images as $i => $image) {
+                $imageDir = "./users/$userName/pictures/$image";
+                ?>
+
+
+                <img class="mt-5" style="width:150px; height: 150px" src="<?php echo $imageDir ?> ">
+                <form action="" method="post">
+                    <button type="submit" name="delete" value="<?php echo $imageDir ?>">Delete</button>
+                    <button type="submit" name="setProfile" value="<?php echo $imageDir ?>">Set this as profile
+                        picture
+                    </button>
+                </form>
+            <?php }
+        } ?>
+        <form action="" method="post">
+            <div class="d-flex flex-row justify-content-between mt-5">
+                <button class="btn btn-secondary btn-lg m-3" type="submit" name="home">Group Chat</button>
+                <button class="btn btn-secondary btn-lg m-3" type="submit" name="logout">Logout</button>
+
+            </div>
+        </form>
     </div>
 </section>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
