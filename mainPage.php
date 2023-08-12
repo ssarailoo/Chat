@@ -2,11 +2,15 @@
 require_once "DatabaseConnection.php";
 session_start();
 $errors = $_SESSION['chatErrors'] ?? "";
-$userLogged = $_SESSION['user'];
+$userLoggedId = $_SESSION['user']['id'];
 $addFriendError = $_SESSION['addFriendError'] ?? '';
 unset($_SESSION['addFriendError']);
-$bioUserLogged = file_get_contents($userLogged['bio']);
-$profilePicUserLogged = $userLogged['profile_pic'];
+$pdo=DatabaseConnection::getInstance()->getConnection();
+$stmt=$pdo->prepare("SELECT username,bio,profile_pic,is_admin,hashed_username from users WHERE id=:id");
+$stmt->execute(['id'=>$userLoggedId]);
+$userLoggedData=$stmt->fetch();
+$bioUserLogged = file_get_contents($userLoggedData['bio']);
+$profilePicUserLogged = $userLoggedData['profile_pic'];
 
 ?>
 <!DOCTYPE html>
@@ -83,8 +87,8 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                             $stmt->execute();
                             $usersData = $stmt->fetchAll();
                             foreach ($usersData as $i => $user) {
-                                $username = $user['username'];
-                                if ($username == $userLogged['username'])
+                                $userId = $user['id'];
+                                if ($userId == $userLoggedId)
                                     continue;
                                 $bio = file_get_contents($user['bio']);
                                 $profilePic = $user['profile_pic'];
@@ -98,14 +102,14 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                                                  class="rounded-circle d-flex align-self-center me-3 shadow-1-strong"
                                                  width="60">
                                             <div class="pt-1">
-                                                <p class="fw-bold mb-0"><?= $username ?></p>
+                                                <p class="fw-bold mb-0"><?= $userLoggedData['username']?></p>
                                                 <p class="small text-white"><?= $bio ?></p>
                                             </div>
                                             <div>
                                                 <button class="btn"><a class="btn btn-secondary bg-opacity-50 "
                                                                        href="addFriend.php?friend=<?= $user['id'] ?>">Add
                                                         Friend</a></button>
-                                                <h5 class="text-danger"><?php if (!empty($addFriendError) && $addFriendError[1] == $username) echo $addFriendError[0]; ?></h5>
+                                                <h5 class="text-danger"><?php if (!empty($addFriendError) && $addFriendError[1] == $userLoggedData['username']) echo $addFriendError[0]; ?></h5>
                                             </div>
                                         </div>
 
@@ -122,7 +126,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
 
             <div class="col-md-6 col-lg-7 col-xl-7 second">
                 <p class="text-blue-500">Welcome,
-                    <b><?php echo $userLogged['is_admin'] ? $userLogged['username'] . "(Admin)" : $userLogged['username']; ?></b>
+                    <b><?php echo $userLoggedData['is_admin'] ? $userLoggedData['username'] . "(Admin)" : $userLoggedData['username']; ?></b>
                 </p>
                 <?php
                 {
@@ -135,7 +139,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                 foreach ($chatsInfos
                 as $index => $chat) {
                 $id = $chat['id'];
-                if ($chat['user_id'] == $userLogged['id']){
+                if ($chat['user_id'] == $userLoggedId){
                 if (empty($chat['message']))
                     continue;
                 $stmt=$pdo->prepare('SELECT profile_pic,username FROM users WHERE id=:id');
@@ -144,7 +148,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                 $profile = $userData['profile_pic'];
                 $username = $userData['username'];
                 $time= $chat['send_at'];
-                if ($userLogged['is_admin'])
+                if ($userLoggedData['is_admin'])
                     $chat['message'] = $chat['message'] . " <form action='delete.php' method='post'><button type='submit'  name='delete' value='$id'>Delete</button></form>";
 
                 ?>
@@ -173,7 +177,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                         $profile = $userData['profile_pic'];
                         if (empty($chat['message']))
                             continue;
-                        if ($userLogged['is_admin'])
+                        if ($userLoggedData['is_admin'])
                             $chat['message'] = $chat['message'] . " <form action='delete.php' method='post'><button type='submit'  name='delete' value='$id'>Delete</button></form>";
                         $profile = $userData['profile_pic'];
                         $username = $userData['username'];
@@ -242,7 +246,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                                                          class="rounded-circle d-flex align-self-center me-3 shadow-1-strong"
                                                          width="60">
                                                     <div class="pt-1">
-                                                        <p class="fw-bold mb-0"><?= $userLogged['username'] ?></p>
+                                                        <p class="fw-bold mb-0"><?= $userLoggedData['username'] ?></p>
                                                         <p class="small text-white"><?= $bioUserLogged ?></p>
                                                     </div>
                                                 </div>
@@ -252,7 +256,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                                                 </div>
                                             </a>
                                         </li>
-                                        <?php if ($userLogged['is_admin']) { ?>
+                                        <?php if ($userLoggedData['is_admin']) { ?>
                                             <li>
                                                 <form class=" my-3" action="block.php" method="post">
                                                     <label class="mx-2" for="username">Username</label>
@@ -301,7 +305,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                                                                     </a></button>
                                                                 <button class="btn"><a
                                                                         class="btn btn-secondary bg-opacity-50 "
-                                                                        href="privateChat.php?from=<?php echo $userLogged['hashed_username'] ?>&to=<?php echo $friendHashedUsername ?>">Message
+                                                                        href="privateChat.php?from=<?php echo $userLoggedData['hashed_username'] ?>&to=<?php echo $friendHashedUsername ?>">Message
                                                                     </a></button>
                                                             </div>
                                                         </a>

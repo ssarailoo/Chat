@@ -1,18 +1,21 @@
 <?php
 require_once "DatabaseConnection.php";
 session_start();
-$userLogged = $_SESSION['user'];
+$userLoggedId = $_SESSION['user']['id'];
 date_default_timezone_set("Asia/Tehran");
 $pdo = DatabaseConnection::getInstance()->getConnection();
+$stmt=$pdo->prepare("SELECT username,bio,profile_pic,is_admin,is_blocked from users WHERE id=:id");
+$stmt->execute(['id'=>$userLoggedId]);
+$userLoggedData=$stmt->fetch();
 $to = $_GET['to'];
 $stmt=$pdo->prepare('SELECT id from users where hashed_username=:to');
 $stmt->execute(['to'=>$to]);
 $to_id=$stmt->fetch()['id'];
-$user = $userLogged['username'];
-$user .= $userLogged['is_admin'] ? " (admin):" : " :";
+$user = $userLoggedData['username'];
+$user .= $userLoggedData['is_admin'] ? " (admin):" : " :";
 if (isset($_POST['send'])) {
     $privateChatErrors = array();
-    if ($userLogged['is_blocked']) {
+    if ($userLoggedData['is_blocked']) {
         $privateChatErrors['blocked'] = "You are blocked from chat!";
     } else {
         if (isLong($_POST['privateMessage'])) {
@@ -21,7 +24,7 @@ if (isset($_POST['send'])) {
             $message = $_POST['privateMessage'];
             $message = stripslashes(htmlspecialchars($message));
             $stmt = $pdo->prepare('INSERT INTO private_chats(message,send_at,from_id,to_id )VALUES (:message,:send_at,:from_id,:to_id)');
-            $stmt->execute(['message' => $message, 'send_at' => date("y/m/d h:i:s"), 'from_id' => $userLogged['id'], 'to_id' => $to_id]);
+            $stmt->execute(['message' => $message, 'send_at' => date("y/m/d h:i:s"), 'from_id' => $userLoggedId, 'to_id' => $to_id]);
 
 
         }
@@ -35,7 +38,7 @@ if (isset($_POST['send'])) {
             $imageDir = "./storage/pictures/chatPics/private/$name";
             $data = "<img style='width: 150px;height: 150px' src='$imageDir' >";
             $stmt = $pdo->prepare('INSERT INTO private_chats( message,send_at,from_id,to_id )VALUES (:message,:send_at,:from_id,:to_id)');
-            $stmt->execute(['message' => $data, 'send_at' => date("y/m/d h:i:s"), 'from_id' => $userLogged['id'], 'to_id' => $to_id]);
+            $stmt->execute(['message' => $data, 'send_at' => date("y/m/d h:i:s"), 'from_id' => $userLoggedId, 'to_id' => $to_id]);
         }
     }
 
@@ -130,17 +133,17 @@ function isLargImage(int $size): bool
 
                 <?php
               $stmt= $pdo->prepare('SELECT * FROM private_chats WHERE (from_id=:from_id AND to_id=:to_id)OR (from_id=:to_id AND to_id=:from_id) ');
-               $stmt->execute(['from_id'=>$userLogged['id'],'to_id'=>$to_id]);
+               $stmt->execute(['from_id'=>$userLoggedId,'to_id'=>$to_id]);
               $chatsInfos= $stmt->fetchAll();
                 foreach ($chatsInfos
 
                 as $index => $chat) {
                 $id = $chat['id'];
                {
-                if ($chat['from_id'] == $userLogged['id']){
+                if ($chat['from_id'] == $userLoggedId){
 
                $stmt= $pdo->prepare("SELECT profile_pic,username from users WHERE id=:id ");
-               $stmt->execute(['id'=>$userLogged['id']]);
+               $stmt->execute(['id'=>$userLoggedId]);
                $userData=$stmt->fetch();
                 $profile = $userData['profile_pic'];
                 $username = $userData['username'];
@@ -172,7 +175,7 @@ function isLargImage(int $size): bool
                         $profile = $userData['profile_pic'];
                         $username = $userData['username'];
                         $time = $chat['send_at'];
-                        if ($userLogged['username'] == $chat['from_id'])
+                        if ($userLoggedData['username'] == $chat['from_id'])
                             $chat['message'] = $chat['message'] . " <form action='' method='post'><button type='submit'  name='deletePrivate' value='$id'>Delete</button></form>";
 
                         ?>

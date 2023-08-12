@@ -157,11 +157,10 @@ function loginValidation(array $inputs, bool $bail = true): bool
     if (empty($loginErrors)) {
         $con = DatabaseConnection::getInstance();
         $pdo = $con->getConnection();
-        $sql = "SELECT * from users WHERE username='$inputs[username]'";
+        $sql = "SELECT id,username from users WHERE username=:username";
         $stmt = $pdo->prepare($sql);
-        $stmt->execute();
+        $stmt->execute(['username'=>$inputs['username']]);
         $data = $stmt->fetch();
-        unset($data['password']);
         $_SESSION['user'] = $data;
         return true;
     } else {
