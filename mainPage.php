@@ -105,7 +105,7 @@ $profilePicUserLogged = $userLogged['profile_pic'];
                                             </div>
                                             <div>
                                                 <button class="btn"><a class="btn btn-secondary bg-opacity-50 "
-                                                                       href="addFriend.php?friend=<?= $username ?>">Add
+                                                                       href="addFriend.php?friend=<?= $user['id'] ?>">Add
                                                         Friend</a></button>
                                                 <h5 class="text-danger"><?php if (!empty($addFriendError) && $addFriendError[1] == $username) echo $addFriendError[0]; ?></h5>
                                             </div>

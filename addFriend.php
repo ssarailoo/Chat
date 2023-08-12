@@ -1,43 +1,24 @@
 <?php
+require_once "DatabaseConnection.php";
 session_start();
-$userlogged = $_SESSION['user']['username'];
-
-
-$friendUsername = $_GET['friend'];
-
-$users = json_decode(file_get_contents('./storage/users.json'), true);
-foreach ($users as $user) {
-    if ($user['username'] == $friendUsername) {
-        $hashedUsername = $user['hashedUsername'];
-        $friendProfile=$user['profilePic'];
-        $friendBio=$user['bio'];
-
-    }
+$userLoggedId = $_SESSION['user']['id'];
+$friendID = $_GET['friend'];
+$con = DatabaseConnection::getInstance();
+$pdo = $con->getConnection();
+$stmt = $pdo->prepare("SELECT * from user_friends WHERE  friend_id=:friend_id");
+$stmt->execute(['friend_id' => $friendID]);
+if ($stmt->fetch())
+ {
+    $stmt = $pdo->prepare("SELECT username from users where  id=:friend_id");
+    $stmt->execute(['friend_id' => $friendID]);
+    $friendUsername = $stmt->fetch()['username'];
+    $errorAddFriend = ["you have already added $friendUsername", $friendUsername];
+    $_SESSION['addFriendError'] = $errorAddFriend;
+    header('location:mainPage.php');
 }
-foreach ($users as $index => $user) {
-    if ($user['username'] == $userlogged) {
-        foreach ($user['friends'] as $friend) {
-            if ($friend['username'] == $friendUsername) {
-                $errorAddFriend = ["you have already added $friendUsername", $friendUsername];
-                $_SESSION['addFriendError'] = $errorAddFriend;
-                header('location:mainPage.php');
 
-            }
-        }
-        if (!isset($errorAddFriend)) {
-
-            $user['friends'][] =
-                [
-                    'profile' => $friendProfile,
-                    'username' => $friendUsername,
-                    'bio' => $friendBio,
-                    'hashedUsername' => $hashedUsername
-                ];
-
-            $users[$index] = $user;
-
-        }
-    }
+if (!isset($errorAddFriend)) {
+    $stmt = $pdo->prepare('INSERT INTO user_friends(user_id,friend_id)VALUES(:user_id,:friend_id)');
+    $stmt->execute(['user_id' => $userLoggedId, 'friend_id' => $friendID]);
 }
-file_put_contents('./storage/users.json', json_encode($users, JSON_PRETTY_PRINT));
 header('location:mainPage.php');
