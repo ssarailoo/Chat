@@ -1,11 +1,12 @@
 <?php
+require_once "DatabaseConnection.php";
 session_start();
 $errors = $_SESSION['chatErrors'] ?? "";
-$userlogged = $_SESSION['user'];
+$userLogged = $_SESSION['user'];
 $addFriendError = $_SESSION['addFriendError'] ?? '';
-$_SESSION['addFriendError'] = '';
-$bioUserLogged = file_get_contents($userlogged['bio']);
-$profilePicUserLogged = $userlogged['profilePic'];
+unset($_SESSION['addFriendError']);
+$bioUserLogged = file_get_contents($userLogged['bio']);
+$profilePicUserLogged = $userLogged['profile_pic'];
 
 ?>
 <!DOCTYPE html>
@@ -76,15 +77,19 @@ $profilePicUserLogged = $userlogged['profilePic'];
 
                         <ul class="list-unstyled mb-0">
                             <?php
-                            if (file_exists('./storage/users.json')) {
-                                $users = json_decode(file_get_contents('./storage/users.json'), true);
+                            $con = DatabaseConnection::getInstance();
+                            $pdo = $con->getConnection();
+                            $sql = 'Select * from users';
+                            $stmt = $pdo->prepare($sql);
+                            $stmt->execute();
+                            $usersData = $stmt->fetchAll();
 
-                            foreach ($users as $i => $user) {
+                            foreach ($usersData as $i => $user) {
                                 $username = $user['username'];
-                                if ($username == $userlogged['username'])
+                                if ($username == $userLogged['username'])
                                     continue;
                                 $bio = file_get_contents($user['bio']);
-                                $profilePic = $user['profilePic'];
+                                $profilePic = $user['profile_pic'];
                                 ?>
                                 <li class="p-2 border-bottom"
                                     style="border-bottom: 1px solid rgba(255,255,255,.3) !important;">
@@ -108,7 +113,7 @@ $profilePicUserLogged = $userlogged['profilePic'];
 
                                     </a>
                                 </li>
-                            <?php } } ?>
+                            <?php } ?>
 
                         </ul>
 
@@ -119,23 +124,31 @@ $profilePicUserLogged = $userlogged['profilePic'];
 
             <div class="col-md-6 col-lg-7 col-xl-7 second">
                 <p class="text-blue-500">Welcome,
-                    <b><?php echo $userlogged['isAdmin'] ? $userlogged['username'] . "(Admin)" : $userlogged['username']; ?></b>
+                    <b><?php echo $userLogged['is_admin'] ? $userLogged['username'] . "(Admin)" : $userLogged['username']; ?></b>
                 </p>
                 <?php
-                if (file_exists("./storage/chat.json") && filesize("./storage/chat.json") > 0) {
-                $chatsInfos = json_decode(file_get_contents("./storage/chat.json"), true);
+                {
+                $con = DatabaseConnection::getInstance();
+                $pdo = $con->getConnection();
+                $sql = 'Select * from public_chats';
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute();
+                $chatsInfos = $stmt->fetchAll();
                 foreach ($chatsInfos
-
                 as $index => $chat) {
-                $number = $chat['number'];
-                if ($chat['user'] == $userlogged['username']){
+                $id = $chat['id'];
+                if ($chat['user_id'] == $userLogged['id']){
                 if (empty($chat['message']))
                     continue;
-                $profile = $chat['profilePic'];
-                $username = $chat['user'];
-                $time = $chat['time'];
-                if ($userlogged['isAdmin'])
-                    $chat['message'] = $chat['message'] . " <form action='delete.php' method='post'><button type='submit'  name='delete' value='$number'>Delete</button></form>";
+                $sql='SELECT profile_pic,username FROM users WHERE id=:id';
+                $stmt=$pdo->prepare($sql);
+                $stmt->execute(['id'=>$chat['user_id']]);
+                $userData=$stmt->fetch();
+                $profile = $userData['profile_pic'];
+                $username = $userData['username'];
+                $time= $chat['send_at'];
+                if ($userLogged['is_admin'])
+                    $chat['message'] = $chat['message'] . " <form action='delete.php' method='post'><button type='submit'  name='delete' value='$id'>Delete</button></form>";
 
                 ?>
                 <ul class="list-unstyled text-white">
@@ -159,12 +172,11 @@ $profilePicUserLogged = $userlogged['profilePic'];
                     <?php } else {
                         if (empty($chat['message']))
                             continue;
-                        if ($userlogged['isAdmin'])
-                            $chat['message'] = $chat['message'] . " <form action='delete.php' method='post'><button type='submit'  name='delete' value='$number'>Delete</button></form>";
-
-                        $profile = $chat['profilePic'];
-                        $username = $chat['user'];
-                        $time = $chat['time'];
+                        if ($userLogged['is_admin'])
+                            $chat['message'] = $chat['message'] . " <form action='delete.php' method='post'><button type='submit'  name='delete' value='$id'>Delete</button></form>";
+                        $profile = $userData['profile_pic'];
+                        $username = $userData['username'];
+                        $time = $chat['send_at'];
 
                         ?>
                         <li class="d-flex justify-content-between mb-4 logged">
@@ -204,7 +216,7 @@ $profilePicUserLogged = $userlogged['profilePic'];
                             as $error) { ?>
                                 <p class="h4 text-danger"> <?php echo $error . "<br>"; ?> </p>
                             <?php }
-                            $_SESSION['chatErrors'] = ''; ?>
+                            unset($_SESSION['chatErrors'] ); ?>
                         </form>
             </div>
 
@@ -229,7 +241,7 @@ $profilePicUserLogged = $userlogged['profilePic'];
                                                          class="rounded-circle d-flex align-self-center me-3 shadow-1-strong"
                                                          width="60">
                                                     <div class="pt-1">
-                                                        <p class="fw-bold mb-0"><?= $userlogged['username'] ?></p>
+                                                        <p class="fw-bold mb-0"><?= $userLogged['username'] ?></p>
                                                         <p class="small text-white"><?= $bioUserLogged ?></p>
                                                     </div>
                                                 </div>
@@ -239,7 +251,7 @@ $profilePicUserLogged = $userlogged['profilePic'];
                                                 </div>
                                             </a>
                                         </li>
-                                        <?php if ($userlogged['isAdmin']) { ?>
+                                        <?php if ($userLogged['is_admin']) { ?>
                                             <li>
                                                 <form class=" my-3" action="block.php" method="post">
                                                     <label class="mx-2" for="username">Username</label>
@@ -250,21 +262,22 @@ $profilePicUserLogged = $userlogged['profilePic'];
                                                     </div>
                                                 </form>
                                             </li>
-                                        <?php }  if (file_exists('./storage/users.json')) {
-                                        $users = json_decode(file_get_contents('./storage/users.json'), true);?>
+                                        <?php }
+                                        $sql="Select username,profile_pic,bio,hashed_username From user_friends join users u on user_friends.friend_id = u.id  ";
+                                        $stmt=$pdo->prepare($sql);
+                                        $stmt->execute();
+                                        $friendsData=$stmt->fetchAll();
+                                        {
+                                       ?>
 
                                         <h5 class="font-weight-bold mb-3 text-center text-white">Friends</h5>
                                         <?php
-                                        foreach ($users as $i => $user) {
-                                            $username = $user['username'];
-                                            if ($username == $userlogged['username']) {
-                                                $friendsInfos = $user['friends'];
+                                        foreach ($friendsData as $i => $friendData) {
 
-                                                foreach ($friendsInfos as $index => $friendInfo) {
-                                                    $friendBio = file_get_contents($friendInfo['bio']);
-                                                    $friendProfilePic = $friendInfo['profile'];
-                                                    $friendUsername = $friendInfo['username'];
-                                                    $friendHashedUsername = $friendInfo['hashedUsername'];
+                                                    $friendBio = file_get_contents($friendData['bio']);
+                                                    $friendProfilePic = $friendData['profile_pic'];
+                                                    $friendUsername = $friendData['username'];
+                                                    $friendHashedUsername = $friendData['hashed_username'];
                                                     ?>
                                                     <li class="p-2 border-bottom"
                                                         style="border-bottom: 1px solid rgba(255,255,255,.3) !important;">
@@ -287,14 +300,14 @@ $profilePicUserLogged = $userlogged['profilePic'];
                                                                     </a></button>
                                                                 <button class="btn"><a
                                                                         class="btn btn-secondary bg-opacity-50 "
-                                                                        href="privateChat.php?from=<?php echo $userlogged['hashedUsername'] ?>&to=<?php echo $friendHashedUsername ?>">Message
+                                                                        href="privateChat.php?from=<?php echo $userLogged['hashed_username'] ?>&to=<?php echo $friendHashedUsername ?>">Message
                                                                     </a></button>
                                                             </div>
                                                         </a>
                                                     </li>
                                                 <?php }
                                                   }
-                                        } }?>
+                                        ?>
 
                                     </ul>
 

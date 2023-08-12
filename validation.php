@@ -160,10 +160,9 @@ function loginValidation(array $inputs, bool $bail = true): bool
         $sql = "SELECT * from users WHERE username='$inputs[username]'";
         $stmt = $pdo->prepare($sql);
         $stmt->execute();
-        $data = $stmt->fetchAll();
+        $data = $stmt->fetch();
         unset($data['password']);
         $_SESSION['user'] = $data;
-
         return true;
     } else {
         $_SESSION['errors-login'] = $loginErrors;
